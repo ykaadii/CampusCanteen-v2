@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  CANTEEN_STAFF
+  CANTEEN_OWNER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  RAZORPAY
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+}
+
+model Campus {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  canteens Canteen[]
+  users    User[]
+
+  @@map("campuses")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  campusId     String?
+  campus       Campus?  @relation(fields: [campusId], references: [id])
+  fcmToken     String? // Firebase push notification token, set on login from client
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders        Order[]
+  staffCanteens CanteenStaff[]
+  ownerCanteens CanteenOwner[]
+
+  @@index([campusId])
+  @@map("users")
+}
+
+model Canteen {
+  id        String   @id @default(cuid())
+  name      String
+  campusId  String
+  campus    Campus   @relation(fields: [campusId], references: [id])
+  isOpen    Boolean  @default(true)
+  imageUrl  String? // Canteen cover photo URL
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menuItems MenuItem[]
+  orders    Order[]
+  staff     CanteenStaff[]
+  owners    CanteenOwner[]
+
+  @@index([campusId])
+  @@map("canteens")
+}
+
+model CanteenStaff {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  canteenId String
+  canteen   Canteen @relation(fields: [canteenId], references: [id])
+
+  @@unique([userId, canteenId])
+  @@map("canteen_staff")
+}
+
+model CanteenOwner {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  canteenId String
+  canteen   Canteen @relation(fields: [canteenId], references: [id])
+
+  @@unique([userId, canteenId])
+  @@map("canteen_owners")
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  canteenId   String
+  canteen     Canteen  @relation(fields: [canteenId], references: [id])
+  name        String
+  description String?
+  price       Decimal
+  isAvailable Boolean  @default(true)
+  imageUrl    String? // Cloudinary URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([canteenId])
+  @@map("menu_items")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  canteenId   String
+  canteen     Canteen     @relation(fields: [canteenId], references: [id])
+  token       Int
+  tokenDate   DateTime
+  status      OrderStatus @default(PENDING)
+  orderType   OrderType   @default(DINE_IN)
+  pickupTime  DateTime    @default(now())
+  totalAmount Decimal
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  items   OrderItem[]
+  payment Payment?
+
+  @@unique([canteenId, tokenDate, token])
+  @@index([userId])
+  @@index([canteenId, status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  price      Decimal
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id])
+  status        PaymentStatus @default(PENDING)
+  method        PaymentMethod @default(CASH)
+  amount        Decimal
+  razorpayId    String? // razorpay order/payment id, when applicable
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+model EmailOtp {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("email_otps")
+}
