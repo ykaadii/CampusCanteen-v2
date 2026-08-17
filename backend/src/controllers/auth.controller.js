@@ -31,42 +31,30 @@ export async function sendSignupOtp(req, res, next) {
     const otp = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
-    // Save or update OTP in DB
+    // Step B: Store OTP using existing database mechanism
     await prisma.emailOtp.upsert({
       where: { email },
       create: { email, otp, expiresAt },
       update: { otp, expiresAt },
     });
 
-    console.log(`[OTP DISPATCH] Generated 6-digit OTP for ${email}: ${otp}`);
+    // Step C: Attempt email delivery via Nodemailer (non-blocking)
+    sendOtpEmail({ to: email, name, otp }).catch((smtpErr) =>
+      console.warn("[SMTP Notice] Nodemailer dispatch notice:", smtpErr.message)
+    );
 
-    // Step B: Try sending email via Nodemailer
-    let emailSent = false;
-    try {
-      const emailResult = await sendOtpEmail({ to: email, name, otp });
-      if (emailResult && emailResult.messageId) {
-        emailSent = true;
-      }
-    } catch (smtpErr) {
-      console.warn("[SMTP Notice] Nodemailer failed/delayed:", smtpErr.message);
-      emailSent = false;
+    // Step D: Production Safety check — ONLY expose devOtp in development/testing environments
+    const isDev = process.env.NODE_ENV !== "production" || process.env.SHOW_DEV_OTP === "true";
+
+    if (isDev) {
+      console.log(`[DEV MODE] Generated 6-digit OTP for ${email}: ${otp}`);
     }
 
-    // Step C: If email sent -> standard clean mode; If email fails -> show OTP on screen (testing mode)
-    if (emailSent) {
-      return res.json({
-        emailSent: true,
-        message: `A 6-digit verification code was sent to ${email}. Please check your Inbox and Spam/Junk folder.`,
-        email,
-      });
-    } else {
-      return res.json({
-        emailSent: false,
-        devOtp: otp,
-        message: `Email delivery unavailable/delayed. Testing Mode code: ${otp}`,
-        email,
-      });
-    }
+    return res.json({
+      message: `A 6-digit verification code was sent to ${email}.`,
+      email,
+      ...(isDev ? { devOtp: otp } : {}),
+    });
   } catch (err) {
     next(err);
   }

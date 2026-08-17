@@ -9,8 +9,7 @@ export default function Signup() {
   const [step, setStep] = useState(1); // Step 1: User info, Step 2: OTP verification
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [otp, setOtp] = useState("");
-  const [demoCode, setDemoCode] = useState("");
-  const [isEmailSent, setIsEmailSent] = useState(true);
+  const [devOtp, setDevOtp] = useState("");
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -33,25 +32,18 @@ export default function Signup() {
     if (e) e.preventDefault();
     setError("");
     setNotice("");
-    setDemoCode("");
+    setDevOtp("");
     setPending(true);
 
     try {
       const res = await sendSignupOtp(form);
 
-      // Check if email sending succeeded or failed (testing fallback mode)
-      if (res.emailSent === false && res.devOtp) {
-        setIsEmailSent(false);
-        setDemoCode(res.devOtp);
-        setOtp(res.devOtp); // Auto-fill testing mode code
-        setNotice(`Email delivery unavailable. Testing Mode Code: ${res.devOtp}`);
-      } else {
-        setIsEmailSent(true);
-        setDemoCode("");
-        setOtp("");
-        setNotice(res.message || `A 6-digit verification code was sent to ${form.email}. Please check your Inbox and Spam/Junk folder.`);
+      // Check if backend returned devOtp (development/testing mode)
+      if (res.devOtp) {
+        setDevOtp(res.devOtp);
       }
 
+      setNotice(res.message || `A 6-digit verification code was sent to ${form.email}. Please check your Inbox and Spam/Junk folder.`);
       setStep(2);
       setResendTimer(60); // 60s cooldown for resending
     } catch (err) {
@@ -184,36 +176,26 @@ export default function Signup() {
         {step === 2 && (
           <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
             
-            {/* Standard Notice vs Testing Fallback Banner */}
-            {isEmailSent ? (
-              <div className="p-4 bg-blue-50/80 border border-blue-200/80 text-blue-900 rounded-2xl text-xs font-medium leading-relaxed">
-                A 6-digit verification code was sent to <strong className="font-bold">{form.email}</strong>. Please check your Inbox and Spam/Junk folder.
+            {/* Standard Notice Banner */}
+            {notice && (
+              <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 text-blue-900 rounded-2xl text-xs font-medium leading-relaxed">
+                {notice}
               </div>
-            ) : (
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 p-4 rounded-2xl flex flex-col items-center gap-2 text-center shadow-2xs">
-                <span className="text-xs font-semibold text-gray-700">
-                  Email delivery unavailable or delayed for <strong className="text-gray-900">{form.email}</strong>.
-                </span>
+            )}
 
-                {demoCode && (
-                  <div className="flex flex-col items-center gap-1.5 mt-1 pt-2 border-t border-amber-200/60 w-full">
-                    <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider">
-                      Testing Mode Verification Code:
-                    </span>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="px-4 py-1.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-mono font-black text-xl rounded-xl tracking-widest shadow-xs">
-                        {demoCode}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setOtp(demoCode)}
-                        className="px-3 py-1.5 bg-white border border-amber-300 text-amber-950 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  </div>
-                )}
+            {/* Development-Only OTP Display */}
+            {devOtp && (
+              <div className="p-3.5 bg-amber-50 border border-amber-200/90 text-amber-950 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-2xs">
+                <span>
+                  Development OTP: <strong className="font-mono text-sm font-black tracking-wider text-amber-900">{devOtp}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOtp(devOtp)}
+                  className="px-2.5 py-1 bg-white border border-amber-300 text-amber-950 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
+                >
+                  Fill Code
+                </button>
               </div>
             )}
 
