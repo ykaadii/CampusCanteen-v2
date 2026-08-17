@@ -46,9 +46,8 @@ export async function sendSignupOtp(req, res, next) {
     console.log(`[OTP DISPATCH] Generated 6-digit OTP for ${email}: ${otp}`);
 
     res.json({
-      message: `A 6-digit verification code was sent to ${email}. Check your Inbox and Spam/Junk folder.`,
+      message: `A 6-digit verification code was sent to ${email}. Please check your inbox and Spam/Junk folder.`,
       email,
-      otpNotice: `OTP sent to ${email}. (Test Code: ${otp})`,
     });
   } catch (err) {
     next(err);
