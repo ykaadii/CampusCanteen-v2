@@ -11,9 +11,16 @@ export async function sendEmail({ to, subject, html }) {
   if (apiKey) {
     try {
       const resend = new Resend(apiKey);
-      // Resend default onboarding domain for testing is onboarding@resend.dev
-      const defaultFrom = "CampusCanteen <onboarding@resend.dev>";
-      const from = process.env.EMAIL_FROM || defaultFrom;
+      // Resend requires sending from onboarding@resend.dev unless a custom domain is verified
+      let from = "CampusCanteen <onboarding@resend.dev>";
+      if (
+        process.env.EMAIL_FROM &&
+        !process.env.EMAIL_FROM.toLowerCase().includes("@gmail.com") &&
+        !process.env.EMAIL_FROM.toLowerCase().includes("@yahoo") &&
+        !process.env.EMAIL_FROM.toLowerCase().includes("@hotmail")
+      ) {
+        from = process.env.EMAIL_FROM;
+      }
 
       const { data, error } = await resend.emails.send({
         from,
