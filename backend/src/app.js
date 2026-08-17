@@ -21,6 +21,7 @@ app.use(apiLimiter);
 app.use(express.json());
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/api/version", (req, res) => res.json({ version: "1.0.1-dev-otp", timestamp: Date.now() }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/campuses", campusRoutes);
