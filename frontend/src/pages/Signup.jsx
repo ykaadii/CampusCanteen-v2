@@ -144,8 +144,11 @@ export default function Signup() {
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
           {notice && (
-            <div className="p-3 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-xs font-medium">
-              {notice}
+            <div className="p-3.5 bg-amber-50 border border-amber-200/90 text-amber-950 rounded-2xl text-xs font-semibold flex flex-col gap-1.5 shadow-2xs">
+              <span className="font-bold text-amber-900">{notice}</span>
+              <span className="text-[11px] text-amber-800/90 font-normal">
+                If your email server delays the message, use the verification code shown in bold above to sign up instantly!
+              </span>
             </div>
           )}
 
