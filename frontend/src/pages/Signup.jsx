@@ -35,15 +35,21 @@ export default function Signup() {
     setDevOtp("");
     setPending(true);
 
+    const cleanForm = {
+      ...form,
+      name: form.name.trim(),
+      email: form.email.trim().toLowerCase(),
+    };
+
     try {
-      const res = await sendSignupOtp(form);
+      const res = await sendSignupOtp(cleanForm);
 
       // Check if backend returned devOtp (development/testing mode)
       if (res.devOtp) {
         setDevOtp(res.devOtp);
       }
 
-      setNotice(res.message || `A 6-digit verification code was sent to ${form.email}. Please check your Inbox and Spam/Junk folder.`);
+      setNotice(res.message || `A 6-digit verification code was sent to ${cleanForm.email}. Please check your Inbox and Spam/Junk folder.`);
       setStep(2);
       setResendTimer(60); // 60s cooldown for resending
     } catch (err) {
@@ -55,7 +61,8 @@ export default function Signup() {
 
   async function handleVerifyOtp(e) {
     e.preventDefault();
-    if (!otp || otp.length !== 6) {
+    const cleanOtp = otp.trim();
+    if (!cleanOtp || cleanOtp.length !== 6) {
       setError("Please enter a valid 6-digit code");
       return;
     }
@@ -63,9 +70,15 @@ export default function Signup() {
     setError("");
     setPending(true);
 
+    const cleanForm = {
+      ...form,
+      name: form.name.trim(),
+      email: form.email.trim().toLowerCase(),
+    };
+
     try {
-      await verifyOtpAndSignup({ ...form, otp });
-      navigate("/student"); // Signup creates a STUDENT account
+      await verifyOtpAndSignup({ ...cleanForm, otp: cleanOtp });
+      navigate("/student", { replace: true }); // Signup creates a STUDENT account
     } catch (err) {
       setError(err.response?.data?.error || "OTP verification failed");
     } finally {

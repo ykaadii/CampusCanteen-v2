@@ -19,7 +19,8 @@ export async function sendSignupOtp(req, res, next) {
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
-    const { name, email } = parsed.data;
+    const name = parsed.data.name.trim();
+    const email = parsed.data.email.trim().toLowerCase();
 
     // Check if account already exists
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -63,7 +64,10 @@ export async function verifyOtpAndSignup(req, res, next) {
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
-    const { name, email, password, otp } = parsed.data;
+    const name = parsed.data.name.trim();
+    const email = parsed.data.email.trim().toLowerCase();
+    const password = parsed.data.password;
+    const otp = parsed.data.otp.trim();
 
     // Check existing account again
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -127,7 +131,9 @@ export async function signup(req, res, next) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
 
-    const { name, email, password } = parsed.data;
+    const name = parsed.data.name.trim();
+    const email = parsed.data.email.trim().toLowerCase();
+    const password = parsed.data.password;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -166,7 +172,8 @@ export async function login(req, res, next) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
 
-    const { email, password } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
+    const password = parsed.data.password;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
