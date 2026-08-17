@@ -27,7 +27,7 @@ export async function sendSignupOtp(req, res, next) {
       return res.status(409).json({ error: "An account with this email already exists" });
     }
 
-    // Generate cryptographically random 6-digit numeric OTP
+    // Step A: Generate cryptographically random 6-digit numeric OTP
     const otp = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
@@ -38,19 +38,35 @@ export async function sendSignupOtp(req, res, next) {
       update: { otp, expiresAt },
     });
 
-    // Send OTP HTML Email asynchronously in background so client response is instant
-    sendOtpEmail({ to: email, name, otp }).catch((err) =>
-      console.warn("[SMTP Notice] OTP Email failed/delayed:", err.message)
-    );
-
     console.log(`[OTP DISPATCH] Generated 6-digit OTP for ${email}: ${otp}`);
 
-    res.json({
-      message: `Verification code sent to ${email}`,
-      email,
-      otp,
-      otpNotice: `A 6-digit verification code was sent to ${email}. (Verification Code: ${otp})`,
-    });
+    // Step B: Try sending email via Nodemailer
+    let emailSent = false;
+    try {
+      const emailResult = await sendOtpEmail({ to: email, name, otp });
+      if (emailResult && emailResult.messageId) {
+        emailSent = true;
+      }
+    } catch (smtpErr) {
+      console.warn("[SMTP Notice] Nodemailer failed/delayed:", smtpErr.message);
+      emailSent = false;
+    }
+
+    // Step C: If email sent -> standard clean mode; If email fails -> show OTP on screen (testing mode)
+    if (emailSent) {
+      return res.json({
+        emailSent: true,
+        message: `A 6-digit verification code was sent to ${email}. Please check your Inbox and Spam/Junk folder.`,
+        email,
+      });
+    } else {
+      return res.json({
+        emailSent: false,
+        devOtp: otp,
+        message: `Email delivery unavailable/delayed. Testing Mode code: ${otp}`,
+        email,
+      });
+    }
   } catch (err) {
     next(err);
   }
@@ -71,72 +87,92 @@ export async function verifyOtpAndSignup(req, res, next) {
       return res.status(409).json({ error: "An account with this email already exists" });
     }
 
-    // Verify OTP record
+    // Check OTP record in DB
     const otpRecord = await prisma.emailOtp.findUnique({ where: { email } });
     if (!otpRecord) {
-      return res.status(400).json({ error: "No verification code found for this email. Please request a new OTP." });
+      return res.status(400).json({ error: "No verification code requested for this email" });
+    }
+
+    if (otpRecord.expiresAt < new Date()) {
+      return res.status(400).json({ error: "Verification code has expired. Please request a new code" });
     }
 
     if (otpRecord.otp !== otp) {
-      return res.status(400).json({ error: "Invalid verification code. Please check your email and try again." });
+      return res.status(400).json({ error: "Invalid verification code. Please check your email and try again" });
     }
 
-    if (new Date() > new Date(otpRecord.expiresAt)) {
-      return res.status(400).json({ error: "Verification code has expired. Please request a new OTP." });
-    }
-
-    // Create user account
+    // Hash password and create STUDENT user account
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, role: "STUDENT" },
-      select: { id: true, name: true, email: true, role: true, campusId: true },
-    });
-
-    // Delete consumed OTP record
-    await prisma.emailOtp.delete({ where: { email } }).catch(() => null);
-
-    const token = signToken(user.id);
-
-    // Send transactional welcome email
-    sendWelcomeEmail({ to: user.email, name: user.name }).catch((err) =>
-      console.warn("Welcome email notice:", err.message)
-    );
-
-    res.status(201).json({ user, token });
-  } catch (err) {
-    next(err);
-  }
-}
-
-// 3. Update User Default Campus Preference
-export async function updateDefaultCampus(req, res, next) {
-  try {
-    const { campusId } = req.body;
-    const userId = req.user.id;
-
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { campusId: campusId || null },
+      data: {
+        name,
+        email,
+        passwordHash,
+        role: "STUDENT",
+      },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
         campusId: true,
-        campus: { select: { id: true, name: true, city: true } },
+        createdAt: true,
       },
     });
 
-    res.json({ user, message: "Default campus updated successfully" });
+    // Clean up consumed OTP
+    await prisma.emailOtp.delete({ where: { email } }).catch(() => {});
+
+    // Send Welcome Email asynchronously
+    sendWelcomeEmail({ to: email, name }).catch((emailErr) =>
+      console.warn("Welcome email notice:", emailErr.message)
+    );
+
+    const token = signToken(user);
+    res.status(201).json({ user, token });
   } catch (err) {
     next(err);
   }
 }
 
-// 4. Legacy Direct Signup (kept for backward compatibility)
+// Legacy direct signup endpoint (bypassing OTP)
 export async function signup(req, res, next) {
-  return verifyOtpAndSignup(req, res, next);
+  try {
+    const parsed = signupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+
+    const { name, email, password } = parsed.data;
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ error: "An account with this email already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        role: "STUDENT",
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        campusId: true,
+        createdAt: true,
+      },
+    });
+
+    const token = signToken(user);
+    res.status(201).json({ user, token });
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function login(req, res, next) {
@@ -145,20 +181,20 @@ export async function login(req, res, next) {
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
+
     const { email, password } = parsed.data;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: { campus: { select: { id: true, name: true, city: true } } },
-    });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
 
-    if (!user) return res.status(401).json({ error: "Invalid email or password" });
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ error: "Invalid email or password" });
-
-    const token = signToken(user.id);
-
+    const token = signToken(user);
     res.json({
       user: {
         id: user.id,
@@ -166,7 +202,6 @@ export async function login(req, res, next) {
         email: user.email,
         role: user.role,
         campusId: user.campusId,
-        campus: user.campus,
       },
       token,
     });
@@ -175,21 +210,50 @@ export async function login(req, res, next) {
   }
 }
 
-export async function me(req, res) {
-  // Fetch fresh user with campus details
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
-    include: { campus: { select: { id: true, name: true, city: true } } },
-  });
+export async function updateDefaultCampus(req, res, next) {
+  try {
+    const { campusId } = req.body;
+    if (!campusId) {
+      return res.status(400).json({ error: "campusId is required" });
+    }
 
-  res.json({
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      campusId: user.campusId,
-      campus: user.campus,
-    },
-  });
+    const campus = await prisma.campus.findUnique({ where: { id: campusId } });
+    if (!campus) {
+      return res.status(404).json({ error: "Campus not found" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { campusId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        campusId: true,
+      },
+    });
+
+    res.json({ user: updatedUser });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function me(req, res, next) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        campusId: true,
+      },
+    });
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
 }
