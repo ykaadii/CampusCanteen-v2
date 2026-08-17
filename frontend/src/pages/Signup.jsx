@@ -148,20 +148,29 @@ export default function Signup() {
       {/* STEP 2: 6-DIGIT OTP VERIFICATION FORM */}
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-          {notice && (
-            <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-medium flex flex-col gap-2 shadow-2xs">
-              <div>{notice}</div>
-              {demoOtp && (
-                <button
-                  type="button"
-                  onClick={() => setOtp(demoOtp)}
-                  className="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-all text-center text-xs shadow-xs cursor-pointer active:scale-95"
-                >
-                  ✨ Click to Auto-Fill Code ({demoOtp})
-                </button>
-              )}
+          {/* 🧪 Test OTP Auto-Fill Card */}
+          <div className="rounded-xl border-2 border-orange-400 bg-orange-50 p-4 shadow-sm flex flex-col gap-2.5 text-orange-950">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-orange-800">
+              <span className="flex items-center gap-1.5">
+                <span>🔑</span> Verification Code Generated
+              </span>
+              {demoOtp && <span className="font-mono text-sm bg-orange-200 text-orange-900 px-2 py-0.5 rounded-md font-bold">{demoOtp}</span>}
             </div>
-          )}
+
+            <p className="text-xs text-orange-900 leading-relaxed">
+              An email was dispatched to <strong>{form.email}</strong>. For instant testing, tap below to auto-fill the 6-digit verification code!
+            </p>
+
+            {demoOtp && (
+              <button
+                type="button"
+                onClick={() => setOtp(demoOtp)}
+                className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 active:scale-98 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>⚡</span> Auto-Fill Test OTP Code ({demoOtp})
+              </button>
+            )}
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium">Enter 6-Digit OTP Code</label>
