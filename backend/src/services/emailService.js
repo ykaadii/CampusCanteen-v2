@@ -1,16 +1,16 @@
 import { Resend } from "resend";
 import { mailer } from "../config/nodemailer.js";
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-
 /**
  * Generic email dispatcher. Uses Resend HTTPS API if RESEND_API_KEY is configured.
  * Falls back to Nodemailer SMTP if RESEND_API_KEY is missing or if Resend returns an error.
  */
 export async function sendEmail({ to, subject, html }) {
-  if (resend) {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (apiKey) {
     try {
+      const resend = new Resend(apiKey);
       // Resend default onboarding domain for testing is onboarding@resend.dev
       const defaultFrom = "CampusCanteen <onboarding@resend.dev>";
       const from = process.env.EMAIL_FROM || defaultFrom;
@@ -23,7 +23,7 @@ export async function sendEmail({ to, subject, html }) {
       });
 
       if (error) {
-        console.error("❌ [Resend API Error]:", error.message || error);
+        console.error("❌ [Resend API Error]:", error.name || error.statusCode, "| Message:", error.message || error);
         return fallbackNodemailer({ to, subject, html });
       }
 
