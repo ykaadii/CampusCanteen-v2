@@ -148,24 +148,24 @@ export default function Signup() {
       {/* STEP 2: 6-DIGIT OTP VERIFICATION FORM */}
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-          {/* 🧪 Test OTP Auto-Fill Card */}
-          <div className="rounded-xl border-2 border-orange-400 bg-orange-50 p-4 shadow-sm flex flex-col gap-2.5 text-orange-950">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-orange-800">
+          {/* 🧪 Test OTP Display & Auto-Fill Card */}
+          <div className="rounded-xl border-2 border-emerald-400 bg-emerald-50 p-4 shadow-sm flex flex-col gap-2.5 text-emerald-950">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-emerald-800">
               <span className="flex items-center gap-1.5">
-                <span>🔑</span> Verification Code Generated
+                <span>🔑</span> Test Code Display:
               </span>
-              {demoOtp && <span className="font-mono text-sm bg-orange-200 text-orange-900 px-2 py-0.5 rounded-md font-bold">{demoOtp}</span>}
+              {demoOtp && <span className="font-mono text-base bg-emerald-200 text-emerald-950 px-2.5 py-1 rounded-md font-extrabold tracking-widest">{demoOtp}</span>}
             </div>
 
-            <p className="text-xs text-orange-900 leading-relaxed">
-              An email was dispatched to <strong>{form.email}</strong>. For instant testing, tap below to auto-fill the 6-digit verification code!
+            <p className="text-xs text-emerald-900 font-medium leading-relaxed">
+              {notice || `OTP sent to ${form.email}. (Test Code: ${demoOtp})`}
             </p>
 
             {demoOtp && (
               <button
                 type="button"
                 onClick={() => setOtp(demoOtp)}
-                className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 active:scale-98 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>⚡</span> Auto-Fill Test OTP Code ({demoOtp})
               </button>
