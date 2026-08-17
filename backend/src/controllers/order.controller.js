@@ -2,7 +2,7 @@ import { prisma } from "../config/db.js";
 import { createOrderSchema, updateOrderStatusSchema } from "../validations/order.validation.js";
 import { getIO } from "../config/socket.js";
 import { sendPushNotification } from "../config/firebase.js";
-import { sendOrderConfirmationEmail, sendOrderReadyEmail } from "../config/nodemailer.js";
+import { sendOrderConfirmationEmail, sendOrderReadyEmail, sendOrderStatusEmail } from "../config/nodemailer.js";
 
 // Helper function to verify canteen staff authorization
 async function verifyStaffAuthorization(userId, canteenId, userRole) {
@@ -235,13 +235,14 @@ export async function updateOrderStatus(req, res, next) {
       console.warn("Socket.IO emit error:", socketErr.message);
     }
 
-    // Trigger Order Ready Email if status is READY
-    if (status === "READY" && updatedOrder.user?.email) {
-      sendOrderReadyEmail({
+    // Trigger Order Status Email notification (ACCEPTED, PREPARING, READY, DELIVERED)
+    if (updatedOrder.user?.email) {
+      sendOrderStatusEmail({
         to: updatedOrder.user.email,
         name: updatedOrder.user.name,
         order: updatedOrder,
-      }).catch((emailErr) => console.warn("Order ready email notice:", emailErr.message));
+        status,
+      }).catch((emailErr) => console.warn("Order status email notice:", emailErr.message));
     }
 
     // Push notification via Firebase Cloud Messaging

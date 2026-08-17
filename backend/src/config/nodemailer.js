@@ -118,23 +118,47 @@ export async function sendOrderConfirmationEmail({ to, name, order }) {
   return sendEmail({ to, subject: `Order Token #${order.token} Confirmed — ${order.canteen?.name}`, html });
 }
 
-// 3. Order Ready Email Template
-export async function sendOrderReadyEmail({ to, name, order }) {
+// 3. Order Status Update Email Template (ACCEPTED, PREPARING, READY, DELIVERED)
+export async function sendOrderStatusEmail({ to, name, order, status }) {
+  const statusColors = {
+    ACCEPTED: "#2563eb",
+    PREPARING: "#d97706",
+    READY: "#10b981",
+    DELIVERED: "#4b5563",
+    CANCELLED: "#dc2626",
+  };
+
+  const statusTitles = {
+    ACCEPTED: "Order Accepted!",
+    PREPARING: "Order in Preparation!",
+    READY: "Order Ready for Pickup!",
+    DELIVERED: "Order Delivered!",
+    CANCELLED: "Order Cancelled",
+  };
+
+  const color = statusColors[status] || "#f97316";
+  const title = statusTitles[status] || `Order Status Updated: ${status}`;
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px;">
-      <div style="background-color: #10b981; color: #fff; padding: 20px; border-radius: 8px; text-align: center;">
-        <h2 style="margin: 0;">YOUR ORDER IS READY!</h2>
+      <div style="background-color: ${color}; color: #fff; padding: 20px; border-radius: 8px; text-align: center;">
+        <h2 style="margin: 0; text-transform: uppercase;">${title}</h2>
         <h1 style="margin: 10px 0 0 0; font-size: 42px;">Token #${order.token}</h1>
       </div>
       <p style="margin-top: 20px; font-size: 16px;">Hi <strong>${name}</strong>,</p>
       <p style="font-size: 15px; color: #333;">
-        Your order from <strong>${order.canteen?.name}</strong> is freshly prepared and ready for pickup right now!
+        Your order from <strong>${order.canteen?.name}</strong> is now marked as <strong>${status}</strong>.
       </p>
       <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
-        <span style="font-size: 18px; font-weight: bold; color: #111;">Head to the counter with Token #${order.token}</span>
+        <span style="font-size: 18px; font-weight: bold; color: #111;">Token #${order.token} • ${order.canteen?.name}</span>
       </div>
       <p style="font-size: 12px; color: #777; text-align: center;">Thank you for using CampusCanteen!</p>
     </div>
   `;
-  return sendEmail({ to, subject: `Token #${order.token} is READY for pickup at ${order.canteen?.name}!`, html });
+
+  return sendEmail({ to, subject: `Token #${order.token} Update: ${status} — ${order.canteen?.name}`, html });
+}
+
+export async function sendOrderReadyEmail({ to, name, order }) {
+  return sendOrderStatusEmail({ to, name, order, status: "READY" });
 }
