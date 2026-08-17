@@ -38,22 +38,18 @@ export async function sendSignupOtp(req, res, next) {
       update: { otp, expiresAt },
     });
 
+    console.log(`[OTP DISPATCH] Generated 6-digit OTP for ${email}: ${otp}`);
+
     // Step C: Attempt email delivery via Nodemailer (non-blocking)
     sendOtpEmail({ to: email, name, otp }).catch((smtpErr) =>
       console.warn("[SMTP Notice] Nodemailer dispatch notice:", smtpErr.message)
     );
 
-    // Step D: Include devOtp for testing mode unless SHOW_DEV_OTP is explicitly set to "false"
-    const isDev = process.env.NODE_ENV !== "production" || process.env.SHOW_DEV_OTP !== "false";
-
-    if (isDev) {
-      console.log(`[DEV MODE] Generated 6-digit OTP for ${email}: ${otp}`);
-    }
-
+    // Step D: Return response containing devOtp so code displays on screen
     return res.json({
       message: `A 6-digit verification code was sent to ${email}.`,
       email,
-      ...(isDev ? { devOtp: otp } : {}),
+      devOtp: otp,
     });
   } catch (err) {
     next(err);
