@@ -1,20 +1,19 @@
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL || "https://campuscanteen-v2-backend.onrender.com/api";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: BASE_URL,
 });
 
-// Attach the stored JWT to every outgoing request, so individual
-// components never have to remember to do it themselves.
+// Attach the stored JWT to every outgoing request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// If the backend ever says the token is invalid/expired, clear it and
-// bounce to login rather than leaving the app in a broken half-logged-in
-// state.
+// Bounce expired tokens cleanly
 api.interceptors.response.use(
   (response) => response,
   (error) => {
