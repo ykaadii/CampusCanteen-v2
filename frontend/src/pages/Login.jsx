@@ -1,21 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { user, loading, login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  // Quick Demo Logins for instant testing across all 4 roles
-  const demoAccounts = [
-    { role: "Student", email: "alex@student.edu", pass: "studentpassword123", color: "bg-blue-50 text-blue-700 border-blue-200" },
-    { role: "Admin", email: "admin@campus.edu", pass: "adminpassword123", color: "bg-purple-50 text-purple-700 border-purple-200" },
-    { role: "Canteen Owner", email: "owner.central@canteen.edu", pass: "owner123", color: "bg-amber-50 text-amber-700 border-amber-200" },
-    { role: "Counter Staff", email: "staff.central@canteen.edu", pass: "staff123", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  ];
+  // If already logged in, redirect to user's home dashboard immediately
+  useEffect(() => {
+    if (user && !loading) {
+      const home =
+        user.role === "ADMIN"
+          ? "/admin"
+          : user.role === "CANTEEN_OWNER"
+          ? "/owner"
+          : user.role === "CANTEEN_STAFF"
+          ? "/canteen"
+          : "/student";
+      navigate(home, { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   async function handleSubmit(e) {
     if (e) e.preventDefault();
@@ -28,26 +35,23 @@ export default function Login() {
     };
 
     try {
-      const user = await login(cleanForm);
+      const loggedInUser = await login(cleanForm);
       const home =
-        user.role === "ADMIN"
+        loggedInUser.role === "ADMIN"
           ? "/admin"
-          : user.role === "CANTEEN_OWNER"
+          : loggedInUser.role === "CANTEEN_OWNER"
           ? "/owner"
-          : user.role === "CANTEEN_STAFF"
+          : loggedInUser.role === "CANTEEN_STAFF"
           ? "/canteen"
           : "/student";
-      navigate(home);
+      
+      // Force navigation with replace to ensure clean redirect to dashboard
+      navigate(home, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || "Invalid email or password");
     } finally {
       setPending(false);
     }
-  }
-
-  function fillDemo(email, pass) {
-    setForm({ email, password: pass });
-    setError("");
   }
 
   return (
@@ -107,26 +111,6 @@ export default function Login() {
             {pending ? "Logging in..." : "Log in ➔"}
           </button>
         </form>
-
-        {/* Quick Demo Test Accounts */}
-        <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-            Quick Test Demo Accounts
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {demoAccounts.map((acc) => (
-              <button
-                key={acc.role}
-                type="button"
-                onClick={() => fillDemo(acc.email, acc.pass)}
-                className={`p-2 rounded-xl border text-left text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer ${acc.color}`}
-              >
-                <div className="text-[10px] opacity-75 uppercase">{acc.role}</div>
-                <div className="truncate font-semibold">{acc.email.split("@")[0]}</div>
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="pt-2 border-t border-gray-100 text-center text-xs text-gray-500 font-medium">
           Don't have an account?{" "}
