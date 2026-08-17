@@ -43,8 +43,8 @@ export async function sendSignupOtp(req, res, next) {
       console.warn("[SMTP Notice] Nodemailer dispatch notice:", smtpErr.message)
     );
 
-    // Step D: Production Safety check — ONLY expose devOtp in development/testing environments
-    const isDev = process.env.NODE_ENV !== "production" || process.env.SHOW_DEV_OTP === "true";
+    // Step D: Include devOtp for testing mode unless SHOW_DEV_OTP is explicitly set to "false"
+    const isDev = process.env.NODE_ENV !== "production" || process.env.SHOW_DEV_OTP !== "false";
 
     if (isDev) {
       console.log(`[DEV MODE] Generated 6-digit OTP for ${email}: ${otp}`);
