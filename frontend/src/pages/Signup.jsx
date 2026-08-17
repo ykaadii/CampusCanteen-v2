@@ -36,8 +36,11 @@ export default function Signup() {
 
     try {
       const res = await sendSignupOtp(form);
-      if (res.otp) {
-        setDemoCode(res.otp);
+      // Extract the real 6-digit verification code from API response
+      const code = res.otp || (res.otpNotice && res.otpNotice.match(/\d{6}/)?.[0]);
+      if (code) {
+        setDemoCode(code);
+        setOtp(code); // Pre-fill the real code directly into input for instant verification!
       }
       setNotice(`A 6-digit verification code was sent to ${form.email}`);
       setStep(2);
@@ -175,24 +178,24 @@ export default function Signup() {
             {/* Enterprise Verification Notice Banner */}
             <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-amber-200/90 p-4 rounded-2xl flex flex-col items-center gap-2 text-center shadow-2xs">
               <span className="text-xs font-semibold text-gray-700">
-                A 6-digit verification code was sent to <strong className="text-gray-900">{form.email}</strong>.
+                Verification code sent to <strong className="text-gray-900">{form.email}</strong>.
               </span>
 
               {demoCode && (
                 <div className="flex flex-col items-center gap-1.5 mt-1 pt-2 border-t border-amber-200/60 w-full">
-                  <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
-                    Verification Code:
+                  <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider">
+                    Your Real Verification Code:
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3.5 py-1 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-mono font-black text-lg rounded-xl tracking-widest shadow-xs">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="px-4 py-1.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-mono font-black text-xl rounded-xl tracking-widest shadow-xs">
                       {demoCode}
                     </span>
                     <button
                       type="button"
                       onClick={() => setOtp(demoCode)}
-                      className="px-2.5 py-1 bg-white border border-amber-300 text-amber-900 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
+                      className="px-3 py-1.5 bg-white border border-amber-300 text-amber-950 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
                     >
-                      Fill Code
+                      Auto-fill
                     </button>
                   </div>
                 </div>
