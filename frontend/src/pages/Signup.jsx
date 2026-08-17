@@ -153,18 +153,27 @@ export default function Signup() {
       {/* STEP 2: 6-DIGIT OTP VERIFICATION FORM */}
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-          {/* ✉️ Blue Box Notice with Test Code */}
-          <div className="p-4 bg-blue-50 border-2 border-blue-300 text-blue-900 rounded-xl text-xs font-semibold leading-relaxed shadow-2xs flex flex-col gap-2.5">
-            <div>
-              ✉️ A 6-digit verification code was sent to your email. (Test Code: <span className="font-mono font-bold text-sm bg-blue-200 text-blue-950 px-2 py-0.5 rounded border border-blue-400 tracking-wider">{actualOtp || demoOtp}</span>)
+          {/* 🔑 ON-SCREEN VERIFICATION CODE BOX */}
+          <div className="p-4 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm flex flex-col gap-3 text-center">
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-800">
+              🔑 YOUR VERIFICATION CODE IS READY
             </div>
+
+            <div className="py-2 px-4 bg-white border-2 border-emerald-300 rounded-xl font-mono text-3xl font-extrabold tracking-[0.3em] text-emerald-950 shadow-inner select-all">
+              {actualOtp || demoOtp || "------"}
+            </div>
+
+            <p className="text-[11px] text-emerald-900 font-medium">
+              Copy the 6-digit code above into the box below or tap the Auto-Fill button!
+            </p>
+
             {(actualOtp || demoOtp) && (
               <button
                 type="button"
                 onClick={() => setOtp(actualOtp || demoOtp)}
-                className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
               >
-                <span>⚡</span> Auto-Fill Test Code ({actualOtp || demoOtp})
+                <span>⚡</span> Auto-Fill Code ({actualOtp || demoOtp})
               </button>
             )}
           </div>
