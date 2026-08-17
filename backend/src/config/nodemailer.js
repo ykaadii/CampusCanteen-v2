@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 
 const smtpPort = Number(process.env.SMTP_PORT) || 465;
 const isSecure = smtpPort === 465;
+// changed the port
 
 export const mailer = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
