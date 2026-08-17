@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/db.js";
 
+const JWT_SECRET = process.env.JWT_SECRET || "campuscanteen_jwt_secret_key_2026";
+
 // Verifies the JWT from the Authorization header, loads the matching user
 // from the database (so we always have fresh role/status data, not just
 // whatever was true when the token was issued), and attaches it as
@@ -13,7 +15,7 @@ export async function requireAuth(req, res, next) {
     }
 
     const token = authHeader.split(" ")[1];
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
 
     // Safely extract string id whether payload.userId is string or object
     const userId = typeof payload.userId === "object" && payload.userId !== null
@@ -33,7 +35,7 @@ export async function requireAuth(req, res, next) {
 
     req.user = user;
     next();
-  } catch {
+  } catch (err) {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 }
