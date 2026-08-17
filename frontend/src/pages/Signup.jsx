@@ -35,7 +35,7 @@ export default function Signup() {
 
     try {
       const res = await sendSignupOtp(form);
-      setNotice(res.devNotice || `A 6-digit verification code was sent to ${form.email}`);
+      setNotice(res.otpNotice || res.message || `A 6-digit verification code was sent to ${form.email}`);
       setStep(2);
       setResendTimer(60); // 60s cooldown for resending
     } catch (err) {

@@ -43,12 +43,12 @@ export async function sendSignupOtp(req, res, next) {
       console.warn("[SMTP Notice] OTP Email failed/delayed:", err.message)
     );
 
-    const isSmtpConfigured = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+    console.log(`[OTP DISPATCH] Generated 6-digit OTP for ${email}: ${otp}`);
 
     res.json({
-      message: "Verification code sent to your email address",
+      message: `A 6-digit verification code was sent to ${email}. Check your Inbox and Spam/Junk folder.`,
       email,
-      ...(isSmtpConfigured ? {} : { devNotice: `[DEV MODE] Your OTP code is: ${otp}` }),
+      otpNotice: `OTP sent to ${email}. (Test Code: ${otp})`,
     });
   } catch (err) {
     next(err);
