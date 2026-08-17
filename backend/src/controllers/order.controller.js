@@ -235,14 +235,13 @@ export async function updateOrderStatus(req, res, next) {
       console.warn("Socket.IO emit error:", socketErr.message);
     }
 
-    // Trigger Order Status Email notification (ACCEPTED, PREPARING, READY, DELIVERED)
-    if (updatedOrder.user?.email) {
-      sendOrderStatusEmail({
+    // Trigger Order Ready Email ONLY if status is READY
+    if (status === "READY" && updatedOrder.user?.email) {
+      sendOrderReadyEmail({
         to: updatedOrder.user.email,
         name: updatedOrder.user.name,
         order: updatedOrder,
-        status,
-      }).catch((emailErr) => console.warn("Order status email notice:", emailErr.message));
+      }).catch((emailErr) => console.warn("Order ready email notice:", emailErr.message));
     }
 
     // Push notification via Firebase Cloud Messaging
