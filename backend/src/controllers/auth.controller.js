@@ -48,6 +48,8 @@ export async function sendSignupOtp(req, res, next) {
     res.json({
       message: `A 6-digit verification code was sent to ${email}. Please check your inbox and Spam/Junk folder.`,
       email,
+      otpNotice: `Verification code sent to ${email}. (Demo Code: ${otp})`,
+      demoOtp: otp,
     });
   } catch (err) {
     next(err);

@@ -12,6 +12,7 @@ export default function Signup() {
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [demoOtp, setDemoOtp] = useState("");
   const [pending, setPending] = useState(false);
 
   // Resend Timer countdown
@@ -31,11 +32,15 @@ export default function Signup() {
     if (e) e.preventDefault();
     setError("");
     setNotice("");
+    setDemoOtp("");
     setPending(true);
 
     try {
       const res = await sendSignupOtp(form);
-      setNotice(res.message || `A 6-digit verification code was sent to ${form.email}`);
+      setNotice(res.otpNotice || res.message || `A 6-digit verification code was sent to ${form.email}`);
+      if (res.demoOtp) {
+        setDemoOtp(res.demoOtp);
+      }
       setStep(2);
       setResendTimer(60); // 60s cooldown for resending
     } catch (err) {
@@ -144,8 +149,17 @@ export default function Signup() {
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
           {notice && (
-            <div className="p-3 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-xs font-medium">
-              {notice}
+            <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-medium flex flex-col gap-2 shadow-2xs">
+              <div>{notice}</div>
+              {demoOtp && (
+                <button
+                  type="button"
+                  onClick={() => setOtp(demoOtp)}
+                  className="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-all text-center text-xs shadow-xs cursor-pointer active:scale-95"
+                >
+                  ✨ Click to Auto-Fill Code ({demoOtp})
+                </button>
+              )}
             </div>
           )}
 
