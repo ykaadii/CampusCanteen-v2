@@ -1,4 +1,4 @@
-# 🍛 CampusCanteen — Full-Stack MERN Application
+# 🍛 CampusCanteen — Full-Stack Application
 
 A modern, production-grade Campus Food Court Pre-Ordering & Management System built with **React 19**, **Vite**, **Tailwind CSS**, **Node.js Express**, **Prisma ORM**, **PostgreSQL**, **Socket.IO**, and **Razorpay**.
 
