@@ -11,6 +11,9 @@ import adminRoutes from "./routes/admin.routes.js";
 
 export const app = express();
 
+// Trust reverse proxy (Render / Vercel / Cloudflare load balancer)
+app.set("trust proxy", 1);
+
 // Security middleware first, before anything touches the request.
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
@@ -29,4 +32,3 @@ app.use("/api/admin", adminRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
-
