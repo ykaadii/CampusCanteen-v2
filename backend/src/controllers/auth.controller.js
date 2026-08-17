@@ -8,7 +8,7 @@ import {
   sendOtpSchema,
   verifyOtpSignupSchema,
 } from "../validations/auth.validation.js";
-import { sendWelcomeEmail, sendOtpEmail } from "../config/nodemailer.js";
+import { sendWelcomeEmail, sendOtpEmail } from "../services/emailService.js";
 
 const SALT_ROUNDS = 10;
 
