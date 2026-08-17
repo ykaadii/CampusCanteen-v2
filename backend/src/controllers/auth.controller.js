@@ -8,7 +8,7 @@ import {
   sendOtpSchema,
   verifyOtpSignupSchema,
 } from "../validations/auth.validation.js";
-import { sendWelcomeEmail, sendOtpEmail } from "../services/emailService.js";
+import { sendWelcomeEmail, sendOtpEmail } from "../config/nodemailer.js";
 
 const SALT_ROUNDS = 10;
 
@@ -46,11 +46,9 @@ export async function sendSignupOtp(req, res, next) {
     console.log(`[OTP DISPATCH] Generated 6-digit OTP for ${email}: ${otp}`);
 
     res.json({
-      message: `A 6-digit verification code was sent to ${email}.`,
+      message: `A 6-digit verification code was sent to ${email}. Check your Inbox and Spam/Junk folder.`,
       email,
-      otpNotice: `YOUR 6-DIGIT VERIFICATION CODE IS: ${otp}`,
-      actualOtp: otp,
-      demoOtp: otp,
+      otpNotice: `OTP sent to ${email}. (Test Code: ${otp})`,
     });
   } catch (err) {
     next(err);

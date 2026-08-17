@@ -12,8 +12,6 @@ export default function Signup() {
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [demoOtp, setDemoOtp] = useState("");
-  const [actualOtp, setActualOtp] = useState("");
   const [pending, setPending] = useState(false);
 
   // Resend Timer countdown
@@ -33,18 +31,11 @@ export default function Signup() {
     if (e) e.preventDefault();
     setError("");
     setNotice("");
-    setDemoOtp("");
-    setActualOtp("");
     setPending(true);
 
     try {
       const res = await sendSignupOtp(form);
       setNotice(res.otpNotice || res.message || `A 6-digit verification code was sent to ${form.email}`);
-      const code = res.actualOtp || res.demoOtp;
-      if (code) {
-        setActualOtp(code);
-        setDemoOtp(code);
-      }
       setStep(2);
       setResendTimer(60); // 60s cooldown for resending
     } catch (err) {
@@ -96,10 +87,9 @@ export default function Signup() {
         </span>
       </div>
 
-      {/* STEP 1: SIGNUP FORM */}
+      {/* STEP 1: ACCOUNT DETAILS FORM */}
       {step === 1 && (
         <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
-
           <div>
             <label className="mb-1 block text-sm font-medium">Full name</label>
             <input
@@ -143,7 +133,7 @@ export default function Signup() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-xl bg-black py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
+            className="w-full rounded-xl bg-black py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-xs"
           >
             {pending ? "Sending Verification Code..." : "Send Verification Code ➔"}
           </button>
@@ -153,33 +143,11 @@ export default function Signup() {
       {/* STEP 2: 6-DIGIT OTP VERIFICATION FORM */}
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-          {/* 🔑 REAL EMAIL & ON-SCREEN VERIFICATION CARD */}
-          <div className="p-4.5 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm flex flex-col gap-3 text-center">
-            <div className="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 border-b border-emerald-200 pb-2">
-              <span className="flex items-center gap-1.5">
-                <span>✉️</span> Real Email Dispatched
-              </span>
-              <span className="font-mono text-xs bg-emerald-200 text-emerald-950 px-2 py-0.5 rounded font-bold">10 min expiry</span>
+          {notice && (
+            <div className="p-3 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-xs font-medium">
+              {notice}
             </div>
-
-            <p className="text-xs text-emerald-900 font-medium text-left leading-relaxed">
-              A verification email has been sent to <strong>{form.email}</strong>. Check your inbox/spam folder or use the code below:
-            </p>
-
-            <div className="py-2.5 px-4 bg-white border-2 border-emerald-400 rounded-xl font-mono text-3xl font-extrabold tracking-[0.3em] text-emerald-950 shadow-inner select-all">
-              {actualOtp || demoOtp || "------"}
-            </div>
-
-            {(actualOtp || demoOtp) && (
-              <button
-                type="button"
-                onClick={() => setOtp(actualOtp || demoOtp)}
-                className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <span>⚡</span> Auto-Fill Real Verification Code ({actualOtp || demoOtp})
-              </button>
-            )}
-          </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium">Enter 6-Digit OTP Code</label>
