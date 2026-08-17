@@ -13,6 +13,7 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [demoOtp, setDemoOtp] = useState("");
+  const [actualOtp, setActualOtp] = useState("");
   const [pending, setPending] = useState(false);
 
   // Resend Timer countdown
@@ -33,13 +34,16 @@ export default function Signup() {
     setError("");
     setNotice("");
     setDemoOtp("");
+    setActualOtp("");
     setPending(true);
 
     try {
       const res = await sendSignupOtp(form);
       setNotice(res.otpNotice || res.message || `A 6-digit verification code was sent to ${form.email}`);
-      if (res.demoOtp) {
-        setDemoOtp(res.demoOtp);
+      const code = res.actualOtp || res.demoOtp;
+      if (code) {
+        setActualOtp(code);
+        setDemoOtp(code);
       }
       setStep(2);
       setResendTimer(60); // 60s cooldown for resending
@@ -148,26 +152,27 @@ export default function Signup() {
       {/* STEP 2: 6-DIGIT OTP VERIFICATION FORM */}
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-          {/* 🧪 Test OTP Display & Auto-Fill Card */}
-          <div className="rounded-xl border-2 border-emerald-400 bg-emerald-50 p-4 shadow-sm flex flex-col gap-2.5 text-emerald-950">
-            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-emerald-800">
-              <span className="flex items-center gap-1.5">
-                <span>🔑</span> Test Code Display:
-              </span>
-              {demoOtp && <span className="font-mono text-base bg-emerald-200 text-emerald-950 px-2.5 py-1 rounded-md font-extrabold tracking-widest">{demoOtp}</span>}
+          {/* 🔑 ACTUAL OTP CODE DISPLAY CARD */}
+          <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-5 shadow-md flex flex-col gap-3 text-emerald-950 text-center">
+            <div className="text-xs font-extrabold uppercase tracking-widest text-emerald-800">
+              🔑 YOUR 6-DIGIT VERIFICATION CODE
             </div>
 
-            <p className="text-xs text-emerald-900 font-medium leading-relaxed">
-              {notice || `OTP sent to ${form.email}. (Test Code: ${demoOtp})`}
+            <div className="py-2.5 px-4 bg-white border-2 border-emerald-400 rounded-xl font-mono text-3xl font-extrabold tracking-[0.3em] text-emerald-950 shadow-inner select-all">
+              {actualOtp || demoOtp || "------"}
+            </div>
+
+            <p className="text-xs text-emerald-900 font-medium">
+              An email was dispatched to <strong>{form.email}</strong>. Use the code above or tap below to auto-fill!
             </p>
 
-            {demoOtp && (
+            {(actualOtp || demoOtp) && (
               <button
                 type="button"
-                onClick={() => setOtp(demoOtp)}
-                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                onClick={() => setOtp(actualOtp || demoOtp)}
+                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-sm rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>⚡</span> Auto-Fill Test OTP Code ({demoOtp})
+                <span>⚡</span> Auto-Fill Code ({actualOtp || demoOtp})
               </button>
             )}
           </div>
