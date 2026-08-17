@@ -96,9 +96,33 @@ export default function Signup() {
         </span>
       </div>
 
-      {/* STEP 1: ACCOUNT DETAILS FORM */}
+      {/* STEP 1: SIGNUP FORM */}
       {step === 1 && (
         <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
+          {/* 🧪 Test Case Quick Fill Helper */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
+            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-amber-900 mb-2">
+              <span className="flex items-center gap-1">⚡ Test Case Helper</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setForm({
+                  name: "Test Student " + Math.floor(Math.random() * 900 + 100),
+                  email: "test.student" + Math.floor(Math.random() * 900 + 100) + "@student.edu",
+                  password: "studentpassword123",
+                })
+              }
+              className="w-full py-2 px-3 bg-white hover:bg-amber-100 border border-amber-200 rounded-lg text-xs font-semibold text-amber-950 transition-all cursor-pointer text-left flex items-center justify-between shadow-2xs"
+            >
+              <div>
+                <div className="font-bold text-gray-900">🎓 Quick Fill Test Student Info</div>
+                <span className="text-[10px] text-gray-500">Auto-fills name, test student email & password</span>
+              </div>
+              <span className="text-sm">➔</span>
+            </button>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-medium">Full name</label>
             <input
@@ -142,7 +166,7 @@ export default function Signup() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-xl bg-black py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-xs"
+            className="w-full rounded-xl bg-black py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
           >
             {pending ? "Sending Verification Code..." : "Send Verification Code ➔"}
           </button>
@@ -153,17 +177,17 @@ export default function Signup() {
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
           {/* ✉️ Blue Box Notice with Test Code */}
-          <div className="p-4 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-xs font-semibold leading-relaxed shadow-2xs flex flex-col gap-2.5">
+          <div className="p-4 bg-blue-50 border-2 border-blue-300 text-blue-900 rounded-xl text-xs font-semibold leading-relaxed shadow-2xs flex flex-col gap-2.5">
             <div>
-              ✉️ A 6-digit verification code was sent to your email. (Test Code: <span className="font-mono font-bold text-sm bg-blue-100 text-blue-950 px-2 py-0.5 rounded border border-blue-300 tracking-wider">{actualOtp || demoOtp}</span>)
+              ✉️ A 6-digit verification code was sent to your email. (Test Code: <span className="font-mono font-bold text-sm bg-blue-200 text-blue-950 px-2 py-0.5 rounded border border-blue-400 tracking-wider">{actualOtp || demoOtp}</span>)
             </div>
             {(actualOtp || demoOtp) && (
               <button
                 type="button"
                 onClick={() => setOtp(actualOtp || demoOtp)}
-                className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
               >
-                <span>⚡</span> Auto-Fill Code ({actualOtp || demoOtp})
+                <span>⚡</span> Auto-Fill Test Code ({actualOtp || demoOtp})
               </button>
             )}
           </div>
