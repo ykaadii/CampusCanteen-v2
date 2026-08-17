@@ -16,17 +16,29 @@ export const mailer = nodemailer.createTransport({
 
 export async function sendEmail({ to, subject, html }) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("❌ SMTP credentials are missing on Render");
+    console.log("SMTP_USER exists:", !!process.env.SMTP_USER);
+    console.log("SMTP_PASS exists:", !!process.env.SMTP_PASS);
     console.log(`[SMTP DEV LOG] Email to: ${to} | Subject: "${subject}"`);
     return null;
   }
 
-  return mailer.sendMail({
-    from: process.env.EMAIL_FROM || `"CampusCanteen" <${process.env.SMTP_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  try {
+    const result = await mailer.sendMail({
+      from: process.env.EMAIL_FROM || `"CampusCanteen" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    console.log("✅ EMAIL SENT SUCCESSFULLY:", result.messageId, "| To:", to);
+    return result;
+  } catch (error) {
+    console.error("❌ EMAIL FAILED TO SEND:", error.message || error);
+    return null;
+  }
 }
+
+
 
 // 0. Signup OTP Verification Email Template
 export async function sendOtpEmail({ to, name, otp }) {
