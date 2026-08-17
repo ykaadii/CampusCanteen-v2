@@ -31,3 +31,7 @@ Thumbs.db
 # Internal temp files
 .system_generated/
 scratch/
+
+# Firebase / Google Cloud service account credentials
+backend/firebase-service-account*.json
+
