@@ -4,6 +4,8 @@ export const mailer = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
   port: Number(process.env.SMTP_PORT) || 587,
   secure: Number(process.env.SMTP_PORT) === 465,
+  connectionTimeout: 5000, // 5 seconds max connection timeout
+  socketTimeout: 8000,     // 8 seconds max socket timeout
   auth: process.env.SMTP_USER && process.env.SMTP_PASS
     ? {
         user: process.env.SMTP_USER,

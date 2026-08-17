@@ -38,9 +38,9 @@ export async function sendSignupOtp(req, res, next) {
       update: { otp, expiresAt },
     });
 
-    // Send OTP HTML Email
-    await sendOtpEmail({ to: email, name, otp }).catch((err) =>
-      console.warn("OTP Email notice:", err.message)
+    // Send OTP HTML Email asynchronously in background so client response is instant
+    sendOtpEmail({ to: email, name, otp }).catch((err) =>
+      console.warn("[SMTP Notice] OTP Email failed/delayed:", err.message)
     );
 
     const isSmtpConfigured = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
