@@ -153,19 +153,22 @@ export default function Signup() {
       {/* STEP 2: 6-DIGIT OTP VERIFICATION FORM */}
       {step === 2 && (
         <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-          {/* 🔑 ON-SCREEN VERIFICATION CODE BOX */}
-          <div className="p-4 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm flex flex-col gap-3 text-center">
-            <div className="text-[11px] font-extrabold uppercase tracking-widest text-emerald-800">
-              🔑 YOUR VERIFICATION CODE IS READY
+          {/* 🔑 REAL EMAIL & ON-SCREEN VERIFICATION CARD */}
+          <div className="p-4.5 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm flex flex-col gap-3 text-center">
+            <div className="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 border-b border-emerald-200 pb-2">
+              <span className="flex items-center gap-1.5">
+                <span>✉️</span> Real Email Dispatched
+              </span>
+              <span className="font-mono text-xs bg-emerald-200 text-emerald-950 px-2 py-0.5 rounded font-bold">10 min expiry</span>
             </div>
 
-            <div className="py-2 px-4 bg-white border-2 border-emerald-300 rounded-xl font-mono text-3xl font-extrabold tracking-[0.3em] text-emerald-950 shadow-inner select-all">
+            <p className="text-xs text-emerald-900 font-medium text-left leading-relaxed">
+              A verification email has been sent to <strong>{form.email}</strong>. Check your inbox/spam folder or use the code below:
+            </p>
+
+            <div className="py-2.5 px-4 bg-white border-2 border-emerald-400 rounded-xl font-mono text-3xl font-extrabold tracking-[0.3em] text-emerald-950 shadow-inner select-all">
               {actualOtp || demoOtp || "------"}
             </div>
-
-            <p className="text-[11px] text-emerald-900 font-medium">
-              Copy the 6-digit code above into the box below or tap the Auto-Fill button!
-            </p>
 
             {(actualOtp || demoOtp) && (
               <button
@@ -173,7 +176,7 @@ export default function Signup() {
                 onClick={() => setOtp(actualOtp || demoOtp)}
                 className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
               >
-                <span>⚡</span> Auto-Fill Code ({actualOtp || demoOtp})
+                <span>⚡</span> Auto-Fill Real Verification Code ({actualOtp || demoOtp})
               </button>
             )}
           </div>
