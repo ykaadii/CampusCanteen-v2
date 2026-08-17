@@ -15,8 +15,17 @@ export async function requireAuth(req, res, next) {
     const token = authHeader.split(" ")[1];
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
+    // Safely extract string id whether payload.userId is string or object
+    const userId = typeof payload.userId === "object" && payload.userId !== null
+      ? payload.userId.id
+      : payload.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token payload" });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: String(userId) },
       select: { id: true, name: true, email: true, role: true, campusId: true },
     });
 
@@ -33,9 +42,9 @@ export async function requireAuth(req, res, next) {
 // Must run after requireAuth.
 export function requireRole(...allowedRoles) {
   return (req, res, next) => {
-    if (!req.user) return res.status(401).json({ error: "Not authenticated" });
+    if (!req.user) return res.status(401).json({ error: "Authentication required" });
     if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Insufficient permissions" });
+      return res.status(403).json({ error: "Access denied: insufficient permissions" });
     }
     next();
   };

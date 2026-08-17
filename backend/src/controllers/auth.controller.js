@@ -206,8 +206,9 @@ export async function updateDefaultCampus(req, res, next) {
       return res.status(404).json({ error: "Campus not found" });
     }
 
+    const userId = typeof req.user === "object" && req.user !== null ? req.user.id : req.user;
     const updatedUser = await prisma.user.update({
-      where: { id: req.user.id },
+      where: { id: String(userId) },
       data: { campusId },
       select: {
         id: true,
@@ -226,8 +227,9 @@ export async function updateDefaultCampus(req, res, next) {
 
 export async function me(req, res, next) {
   try {
+    const userId = typeof req.user === "object" && req.user !== null ? req.user.id : req.user;
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: String(userId) },
       select: {
         id: true,
         name: true,
