@@ -150,3 +150,10 @@ export async function sendOrderReadyEmail({ to, name, order }) {
   `;
   return sendEmail({ to, subject: `Token #${order.token} is READY for pickup at ${order.canteen?.name}!`, html });
 }
+
+export async function sendOrderStatusEmail({ to, name, order, status }) {
+  if (status === "READY") {
+    return sendOrderReadyEmail({ to, name, order });
+  }
+  return null;
+}

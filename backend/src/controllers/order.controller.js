@@ -2,7 +2,7 @@ import { prisma } from "../config/db.js";
 import { createOrderSchema, updateOrderStatusSchema } from "../validations/order.validation.js";
 import { getIO } from "../config/socket.js";
 import { sendPushNotification } from "../config/firebase.js";
-import { sendOrderConfirmationEmail, sendOrderReadyEmail, sendOrderStatusEmail } from "../config/nodemailer.js";
+import { sendOrderConfirmationEmail, sendOrderReadyEmail } from "../config/nodemailer.js";
 
 // Helper function to verify canteen staff authorization
 async function verifyStaffAuthorization(userId, canteenId, userRole) {
