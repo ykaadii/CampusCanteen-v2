@@ -2,67 +2,68 @@ import { Resend } from "resend";
 import { mailer } from "../config/nodemailer.js";
 
 /**
- * Generic email dispatcher. Uses Resend HTTPS API if RESEND_API_KEY is configured.
- * Falls back to Nodemailer SMTP if RESEND_API_KEY is missing or if Resend returns an error.
+ * Generic email dispatcher.
+ * Priority 1: Nodemailer SMTP (Port 465 SSL) - Sends directly to any recipient email.
+ * Priority 2: Resend HTTPS API - Fallback when SMTP is unconfigured or unavailable.
  */
 export async function sendEmail({ to, subject, html }) {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (apiKey) {
+  // Priority 1: Nodemailer SMTP
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
-      const resend = new Resend(apiKey);
-      // Resend requires sending from onboarding@resend.dev unless a custom domain is verified
-      let from = "CampusCanteen <onboarding@resend.dev>";
-      if (
-        process.env.EMAIL_FROM &&
-        !process.env.EMAIL_FROM.toLowerCase().includes("@gmail.com") &&
-        !process.env.EMAIL_FROM.toLowerCase().includes("@yahoo") &&
-        !process.env.EMAIL_FROM.toLowerCase().includes("@hotmail")
-      ) {
-        from = process.env.EMAIL_FROM;
-      }
-
-      const { data, error } = await resend.emails.send({
-        from,
+      const result = await mailer.sendMail({
+        from: process.env.EMAIL_FROM || `"CampusCanteen" <${process.env.SMTP_USER}>`,
         to,
         subject,
         html,
       });
-
-      if (error) {
-        console.error("❌ [Resend API Error]:", error.name || error.statusCode, "| Message:", error.message || error);
-        return fallbackNodemailer({ to, subject, html });
-      }
-
-      console.log("✅ [Resend API] Email sent successfully | ID:", data?.id, "| To:", to);
-      return data;
-    } catch (err) {
-      console.error("❌ [Resend API Exception]:", err.message || err);
-      return fallbackNodemailer({ to, subject, html });
+      console.log("✅ [Nodemailer SMTP] Email sent successfully:", result.messageId, "| To:", to);
+      return result;
+    } catch (error) {
+      console.error("❌ [Nodemailer SMTP Error]:", error.message || error);
+      // Attempt Resend fallback if Nodemailer encounters an error
+      return fallbackResend({ to, subject, html });
     }
   }
 
-  // Fallback to Nodemailer SMTP if RESEND_API_KEY is not configured
-  return fallbackNodemailer({ to, subject, html });
+  // Priority 2: Resend HTTPS API Fallback
+  return fallbackResend({ to, subject, html });
 }
 
-async function fallbackNodemailer({ to, subject, html }) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.log(`[Email Dev Log] (No RESEND_API_KEY or SMTP configured) To: ${to} | Subject: "${subject}"`);
+async function fallbackResend({ to, subject, html }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.log(`[Email Dev Log] (No SMTP or RESEND_API_KEY configured) To: ${to} | Subject: "${subject}"`);
     return null;
   }
 
   try {
-    const result = await mailer.sendMail({
-      from: process.env.EMAIL_FROM || `"CampusCanteen" <${process.env.SMTP_USER}>`,
+    const resend = new Resend(apiKey);
+    let from = "CampusCanteen <onboarding@resend.dev>";
+    if (
+      process.env.EMAIL_FROM &&
+      !process.env.EMAIL_FROM.toLowerCase().includes("@gmail.com") &&
+      !process.env.EMAIL_FROM.toLowerCase().includes("@yahoo") &&
+      !process.env.EMAIL_FROM.toLowerCase().includes("@hotmail")
+    ) {
+      from = process.env.EMAIL_FROM;
+    }
+
+    const { data, error } = await resend.emails.send({
+      from,
       to,
       subject,
       html,
     });
-    console.log("✅ [Nodemailer Fallback] Email sent successfully:", result.messageId, "| To:", to);
-    return result;
-  } catch (error) {
-    console.error("❌ [Nodemailer Fallback Error]:", error.message || error);
+
+    if (error) {
+      console.error("❌ [Resend API Error]:", error.message || error);
+      return null;
+    }
+
+    console.log("✅ [Resend API] Email sent successfully | ID:", data?.id, "| To:", to);
+    return data;
+  } catch (err) {
+    console.error("❌ [Resend API Exception]:", err.message || err);
     return null;
   }
 }
