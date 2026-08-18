@@ -19,6 +19,10 @@ export default function StudentDashboard() {
 
   const [canteens, setCanteens] = useState([]);
   const [selectedCanteen, setSelectedCanteen] = useState(null);
+  
+  // Navigation view mode: "canteens" (Canteen Directory) vs "menu" (Inside Canteen Screen)
+  const [viewMode, setViewMode] = useState("canteens");
+  const [dishSearch, setDishSearch] = useState("");
 
   const [menuItems, setMenuItems] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -113,6 +117,7 @@ export default function StudentDashboard() {
     try {
       const { data } = await api.get(`/canteens?campusId=${campusId}`);
       setCanteens(data.canteens);
+      setViewMode("canteens"); // Default to canteen directory when changing campus
       if (data.canteens.length > 0) {
         const firstCanteen = data.canteens[0];
         setSelectedCanteen(firstCanteen);
@@ -129,9 +134,16 @@ export default function StudentDashboard() {
     }
   }
 
-  function handleSelectCanteenCard(canteen) {
+  function handleOpenCanteenMenu(canteen) {
     setSelectedCanteen(canteen);
     setMenuItems(canteen.menuItems || []);
+    setDishSearch("");
+    setViewMode("menu"); // Go inside selected canteen screen
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleBackToCanteens() {
+    setViewMode("canteens"); // Return to canteen directory list
   }
 
   async function fetchMyOrders() {
@@ -179,12 +191,18 @@ export default function StudentDashboard() {
 
   const isCurrentCampusDefault = user?.campusId === selectedCampus?.id;
 
+  const filteredMenuItems = menuItems.filter((item) =>
+    dishSearch === ""
+      ? true
+      : item.name.toLowerCase().includes(dishSearch.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(dishSearch.toLowerCase()))
+  );
+
   return (
     <DashboardShell>
       <div className="flex flex-col gap-8">
         {/* VIBRANT WARM FOOD HERO BANNER */}
         <div className="relative overflow-hidden bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 text-white p-7 sm:p-9 rounded-3xl shadow-xl shadow-orange-500/15 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-orange-400/30">
-          {/* Decorative radial background accent blur */}
           <div className="absolute -top-12 -right-12 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -198,7 +216,7 @@ export default function StudentDashboard() {
               Order Fresh Meals directly from your Campus Canteens
             </h1>
             <p className="text-xs sm:text-sm text-orange-100 font-semibold leading-relaxed">
-              Explore canteens on your campus, pre-order for instant pickup, choose Dine-In or Takeaway, and track live kitchen status.
+              Select a canteen on your campus, explore its menu, pre-order for instant pickup, and track live order status.
             </p>
           </div>
 
@@ -225,7 +243,7 @@ export default function StudentDashboard() {
               <button
                 onClick={handleSetDefaultCampus}
                 disabled={savingDefault}
-                className="py-2 px-3.5 bg-white text-orange-950 hover:bg-orange-50 text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1"
+                className="py-2 px-3.5 bg-white text-orange-950 hover:bg-orange-50 text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer"
               >
                 {savingDefault ? "Saving..." : "Set as Default Campus"}
               </button>
@@ -237,8 +255,11 @@ export default function StudentDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-2">
           <div className="flex items-center gap-3 text-sm font-bold">
             <button
-              onClick={() => setActiveTab("menu")}
-              className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 ${
+              onClick={() => {
+                setActiveTab("menu");
+                setViewMode("canteens");
+              }}
+              className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === "menu"
                   ? "bg-black text-white shadow-md font-bold"
                   : "text-gray-600 hover:text-black hover:bg-gray-100/80"
@@ -252,7 +273,7 @@ export default function StudentDashboard() {
 
             <button
               onClick={() => setActiveTab("orders")}
-              className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 ${
+              className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === "orders"
                   ? "bg-black text-white shadow-md font-bold"
                   : "text-gray-600 hover:text-black hover:bg-gray-100/80"
@@ -271,7 +292,7 @@ export default function StudentDashboard() {
             {!notificationEnabled && (
               <button
                 onClick={handleEnablePushNotifications}
-                className="py-2 px-3.5 bg-blue-50 text-blue-900 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-xl transition-all shadow-2xs"
+                className="py-2 px-3.5 bg-blue-50 text-blue-900 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer"
               >
                 Enable Push Alerts
               </button>
@@ -280,7 +301,7 @@ export default function StudentDashboard() {
             {cartItemCount > 0 && (
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="py-2.5 px-4.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2 animate-bounce"
+                className="py-2.5 px-4.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2 animate-bounce cursor-pointer"
               >
                 <span>View Cart ({cartItemCount})</span>
                 <span>• ₹{cartSubtotal.toFixed(2)}</span>
@@ -295,47 +316,49 @@ export default function StudentDashboard() {
           <div className="py-16 text-center text-gray-500 text-sm font-medium">Loading campus details...</div>
         ) : (
           <>
-            {/* CANTEENS & MENU ITEMS TAB */}
+            {/* CANTEENS & MENU TAB */}
             {activeTab === "menu" && (
-              <div className="flex flex-col gap-8">
-                {/* SECTION 1: VISUAL CANTEEN CARDS GRID */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-lg font-extrabold text-gray-900">
-                        Canteens in {selectedCampus?.name}
-                      </h2>
-                      <p className="text-xs text-gray-500">Select a canteen below to view its dishes</p>
-                    </div>
-                  </div>
+              <div className="flex flex-col gap-6">
+                
+                {/* MODE A: CANTEEN DIRECTORY (List of Canteen Cards) */}
+                {viewMode === "canteens" && (
+                  <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+                      <div>
+                        <h2 className="text-xl font-black text-gray-900">
+                          Canteens in {selectedCampus?.name}
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Tap any canteen below to enter and view its full food menu.
+                        </p>
+                      </div>
 
-                  {canteenLoading ? (
-                    <div className="py-12 text-center text-gray-400 text-xs">Loading canteens...</div>
-                  ) : canteens.length === 0 ? (
-                    <div className="py-12 text-center text-gray-400 bg-white rounded-3xl border border-gray-200">
-                      No canteens available in this campus.
+                      <span className="text-xs font-bold text-gray-700 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs self-start sm:self-auto">
+                        {canteens.length} Canteens Available
+                      </span>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {canteens.map((canteen) => {
-                        const isSelected = selectedCanteen?.id === canteen.id;
-                        return (
+
+                    {canteenLoading ? (
+                      <div className="py-16 text-center text-gray-400 text-sm">Loading canteens...</div>
+                    ) : canteens.length === 0 ? (
+                      <div className="py-16 text-center text-gray-400 bg-white rounded-3xl border border-gray-200">
+                        No canteens available in this campus.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {canteens.map((canteen) => (
                           <div
                             key={canteen.id}
-                            onClick={() => handleSelectCanteenCard(canteen)}
-                            className={`cursor-pointer bg-white rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between group ${
-                              isSelected
-                                ? "border-orange-500 ring-2 ring-orange-500/80 shadow-2xl scale-[1.01]"
-                                : "border-gray-200/80 hover:border-gray-400 hover:shadow-xl hover:-translate-y-1"
-                            }`}
+                            onClick={() => handleOpenCanteenMenu(canteen)}
+                            className="bg-white rounded-3xl border border-gray-200/80 hover:border-orange-500 transition-all duration-300 overflow-hidden flex flex-col justify-between group shadow-sm hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
                           >
-                            <div className="relative overflow-hidden h-44">
+                            <div className="relative overflow-hidden h-48">
                               <img
                                 src={canteen.imageUrl || DEFAULT_CANTEEN_IMAGE}
                                 alt={canteen.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                               <div className="absolute top-3.5 right-3.5">
                                 <span
@@ -349,68 +372,99 @@ export default function StudentDashboard() {
                                 </span>
                               </div>
 
-                              {isSelected && (
-                                <div className="absolute top-3.5 left-3.5 bg-black text-white px-3 py-1 rounded-full text-xs font-black shadow-md">
-                                  ✓ Selected
-                                </div>
-                              )}
-
                               <div className="absolute bottom-3.5 left-4 right-4 text-white">
                                 <h3 className="font-black text-xl drop-shadow-md leading-tight">{canteen.name}</h3>
+                                <p className="text-xs text-orange-200 font-medium mt-0.5">{canteen.campus?.name}</p>
                               </div>
                             </div>
 
-                            <div className="p-4 flex items-center justify-between text-xs text-gray-600 bg-gray-50/50 border-t border-gray-100">
-                              <span>Campus: {canteen.campus?.name}</span>
-                              <span className="font-bold text-gray-900 bg-white px-2.5 py-1 rounded-lg border border-gray-200 shadow-2xs">
+                            <div className="p-4 flex items-center justify-between bg-gray-50/50 border-t border-gray-100">
+                              <span className="text-xs font-bold text-gray-700 bg-white px-2.5 py-1 rounded-lg border border-gray-200 shadow-2xs">
                                 {canteen.menuItems?.length || 0} Dishes
+                              </span>
+
+                              <span className="text-xs font-extrabold text-orange-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                                View Menu & Order &rarr;
                               </span>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* SECTION 2: ITEMS LISTED UNDER SELECTED CANTEEN */}
-                {selectedCanteen && (
-                  <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200/80 shadow-xs flex flex-col gap-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
-                      <div>
-                        <h2 className="text-xl font-black text-gray-900 flex items-center gap-2.5">
-                          <span>Dishes in "{selectedCanteen.name}"</span>
-                          <span
-                            className={`px-3 py-0.5 rounded-full text-xs font-extrabold ${
-                              selectedCanteen.isOpen ? "bg-emerald-100 text-emerald-900 border border-emerald-200" : "bg-rose-100 text-rose-900 border border-rose-200"
-                            }`}
-                          >
-                            {selectedCanteen.isOpen ? "Accepting Orders" : "Closed"}
-                          </span>
-                        </h2>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Select your favorite dishes and click Add to Cart.
-                        </p>
+                        ))}
                       </div>
+                    )}
+                  </div>
+                )}
 
-                      <span className="text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 shadow-2xs">
-                        {menuItems.length} items available
+                {/* MODE B: INSIDE SELECTED CANTEEN MENU SCREEN */}
+                {viewMode === "menu" && selectedCanteen && (
+                  <div className="flex flex-col gap-6">
+                    {/* BACK NAVIGATION BUTTON */}
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={handleBackToCanteens}
+                        className="py-2 px-4 bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-2 cursor-pointer"
+                      >
+                        <span>&larr; Back to All Canteens</span>
+                      </button>
+
+                      <span className="text-xs font-bold text-gray-500">
+                        Campus: <strong className="text-gray-900">{selectedCampus?.name}</strong>
                       </span>
                     </div>
 
+                    {/* CANTEEN BANNER HEADER */}
+                    <div className="relative overflow-hidden rounded-3xl bg-gray-900 text-white h-48 sm:h-56 shadow-lg">
+                      <img
+                        src={selectedCanteen.imageUrl || DEFAULT_CANTEEN_IMAGE}
+                        alt={selectedCanteen.name}
+                        className="w-full h-full object-cover opacity-50"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                      <div className="absolute bottom-5 left-5 right-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2.5 mb-1.5">
+                            <span
+                              className={`px-3 py-0.5 rounded-full text-xs font-black shadow-md ${
+                                selectedCanteen.isOpen ? "bg-emerald-500 text-white" : "bg-rose-500 text-white"
+                              }`}
+                            >
+                              {selectedCanteen.isOpen ? "OPEN NOW" : "CLOSED"}
+                            </span>
+                            <span className="text-xs text-orange-200 font-semibold">
+                              {menuItems.length} Dishes Available
+                            </span>
+                          </div>
+                          <h1 className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">
+                            {selectedCanteen.name}
+                          </h1>
+                        </div>
+
+                        <div className="w-full sm:w-72">
+                          <input
+                            type="text"
+                            value={dishSearch}
+                            onChange={(e) => setDishSearch(e.target.value)}
+                            placeholder={`Search dishes in ${selectedCanteen.name}...`}
+                            className="w-full bg-white/20 backdrop-blur-md border border-white/30 text-white placeholder-orange-100 rounded-xl px-3.5 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     {!selectedCanteen.isOpen && (
-                      <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs font-semibold">
-                        This canteen is currently closed. You can view items, but new orders are paused.
+                      <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs font-semibold">
+                        This canteen is currently closed. You can browse dishes, but ordering is paused.
                       </div>
                     )}
 
+                    {/* DISHES GRID */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {menuItems.length === 0 ? (
-                        <div className="col-span-full py-16 text-center text-gray-400">
-                          <p className="font-bold text-gray-600">No dishes listed in this canteen yet.</p>
+                      {filteredMenuItems.length === 0 ? (
+                        <div className="col-span-full py-16 text-center text-gray-400 bg-white rounded-3xl border border-gray-200">
+                          <p className="font-bold text-gray-700">No dishes match your search.</p>
                         </div>
                       ) : (
-                        menuItems.map((item) => {
+                        filteredMenuItems.map((item) => {
                           const cartQty = cart.find((i) => i.id === item.id)?.quantity || 0;
                           return (
                             <div
@@ -454,14 +508,14 @@ export default function StudentDashboard() {
                                     <div className="flex items-center justify-between border border-gray-300 rounded-2xl p-1 bg-gray-50 shadow-2xs">
                                       <button
                                         onClick={() => handleUpdateQuantity(item.id, cartQty - 1)}
-                                        className="px-3.5 py-1.5 bg-white rounded-xl border border-gray-200 text-xs font-black hover:bg-gray-100"
+                                        className="px-3.5 py-1.5 bg-white rounded-xl border border-gray-200 text-xs font-black hover:bg-gray-100 cursor-pointer"
                                       >
                                         -
                                       </button>
                                       <span className="text-xs font-black text-gray-900">{cartQty} in cart</span>
                                       <button
                                         onClick={() => handleUpdateQuantity(item.id, cartQty + 1)}
-                                        className="px-3.5 py-1.5 bg-white rounded-xl border border-gray-200 text-xs font-black hover:bg-gray-100"
+                                        className="px-3.5 py-1.5 bg-white rounded-xl border border-gray-200 text-xs font-black hover:bg-gray-100 cursor-pointer"
                                       >
                                         +
                                       </button>
@@ -469,7 +523,7 @@ export default function StudentDashboard() {
                                   ) : (
                                     <button
                                       onClick={() => handleAddToCart(item)}
-                                      className="w-full py-2.5 bg-black text-white text-xs font-bold rounded-2xl hover:bg-orange-600 transition-colors shadow-md flex items-center justify-center gap-1"
+                                      className="w-full py-2.5 bg-black text-white text-xs font-bold rounded-2xl hover:bg-orange-600 transition-colors shadow-md flex items-center justify-center gap-1 cursor-pointer"
                                     >
                                       <span>+ Add to Cart</span>
                                     </button>
@@ -490,6 +544,7 @@ export default function StudentDashboard() {
                     </div>
                   </div>
                 )}
+
               </div>
             )}
 
@@ -591,7 +646,7 @@ export default function StudentDashboard() {
         <div className="sm:hidden fixed bottom-5 right-4 z-40">
           <button
             onClick={() => setIsCartOpen(true)}
-            className="py-3 px-5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-full shadow-2xl shadow-orange-500/40 flex items-center gap-2.5 animate-bounce border border-white/20"
+            className="py-3 px-5 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-full shadow-2xl shadow-orange-500/40 flex items-center gap-2.5 animate-bounce border border-white/20 cursor-pointer"
           >
             <span>View Cart ({cartItemCount})</span>
             <span>• ₹{cartSubtotal.toFixed(2)}</span>
