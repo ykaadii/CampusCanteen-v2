@@ -171,7 +171,10 @@ export default function CanteenDashboard() {
   async function handleDeleteMenuItem(id) {
     if (!confirm("Are you sure you want to delete this menu item?")) return;
     try {
-      await api.delete(`/menu/${id}`);
+      const { data } = await api.delete(`/menu/${id}`);
+      if (data.message) {
+        alert(data.message);
+      }
       fetchCanteenData(selectedCanteen.id);
     } catch (err) {
       alert(err.response?.data?.error || "Failed to delete menu item");

@@ -79,7 +79,6 @@ export async function createMenuItem(req, res, next) {
 export async function updateMenuItem(req, res, next) {
   try {
     const { id } = req.params;
-
     const existing = await prisma.menuItem.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: "Menu item not found" });
@@ -88,7 +87,18 @@ export async function updateMenuItem(req, res, next) {
     // Verify staff/owner authorization
     const isAuthorized = await verifyStaffAuthorization(req.user.id, existing.canteenId, req.user.role);
     if (!isAuthorized) {
-      return res.status(403).json({ error: "You are not authorized to edit menu items for this canteen" });
+      return res.status(403).json({ error: "You are not authorized to update menu items for this canteen" });
+    }
+
+    const bodyToValidate = {
+      ...req.body,
+      canteenId: existing.canteenId,
+      price: req.body.price !== undefined ? Number(req.body.price) : undefined,
+    };
+
+    const parsed = menuItemSchema.safeParse(bodyToValidate);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
     }
 
     let imageUrl = existing.imageUrl;
@@ -100,24 +110,13 @@ export async function updateMenuItem(req, res, next) {
         console.warn("Cloudinary upload failed, keeping existing image:", uploadErr.message);
       }
     } else if (req.body.imageUrl !== undefined) {
-      imageUrl = req.body.imageUrl;
+      imageUrl = req.body.imageUrl || null;
     }
-
-    const price = req.body.price !== undefined ? Number(req.body.price) : existing.price;
-    const name = req.body.name || existing.name;
-    const description = req.body.description !== undefined ? req.body.description : existing.description;
-    const isAvailable =
-      req.body.isAvailable !== undefined
-        ? req.body.isAvailable === "true" || req.body.isAvailable === true
-        : existing.isAvailable;
 
     const item = await prisma.menuItem.update({
       where: { id },
       data: {
-        name,
-        description,
-        price,
-        isAvailable,
+        ...parsed.data,
         imageUrl,
       },
     });
@@ -159,7 +158,15 @@ export async function toggleAvailability(req, res, next) {
 export async function deleteMenuItem(req, res, next) {
   try {
     const { id } = req.params;
-    const existing = await prisma.menuItem.findUnique({ where: { id } });
+    const existing = await prisma.menuItem.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { orderItems: true },
+        },
+      },
+    });
+
     if (!existing) {
       return res.status(404).json({ error: "Menu item not found" });
     }
@@ -170,9 +177,33 @@ export async function deleteMenuItem(req, res, next) {
       return res.status(403).json({ error: "You are not authorized to delete menu items for this canteen" });
     }
 
+    // If item has historical customer orders, mark as unavailable (Sold Out) to preserve order receipts
+    if (existing._count?.orderItems > 0) {
+      await prisma.menuItem.update({
+        where: { id },
+        data: { isAvailable: false },
+      });
+      return res.json({
+        message: "Item is linked to past customer orders. It has been marked as Unavailable (Sold Out) instead of deleted.",
+        softDeleted: true,
+      });
+    }
+
+    // Safe to hard delete if never ordered
     await prisma.menuItem.delete({ where: { id } });
     res.json({ message: "Menu item deleted successfully" });
   } catch (err) {
+    if (err.code === "P2003") {
+      // Foreign Key Violation Safety Fallback
+      await prisma.menuItem.update({
+        where: { id: req.params.id },
+        data: { isAvailable: false },
+      }).catch(() => {});
+      return res.json({
+        message: "Item is linked to past customer orders. Marked as Unavailable instead of deleted.",
+        softDeleted: true,
+      });
+    }
     next(err);
   }
 }
