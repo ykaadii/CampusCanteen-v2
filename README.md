@@ -19,19 +19,21 @@
 
 ## 🌟 Architecture & Key Features
 
-### 🎓 1. Student Portal (`/student`)
+### 🎓 1. Student Portal & Modern Mobile UX (`/student`)
+- **2-Step Canteen Navigation:** Swiggy/Zomato-style 2-step navigation flow. Tapping a canteen card on the campus directory screen takes students *inside* a dedicated canteen view with its own cover banner and dish search bar.
 - **Campus & Canteen Selection:** Switch between campus locations (e.g. NIT Delhi, Main University Campus) with automatic default campus preference saving.
 - **Dine-In vs Takeaway Toggle:** Specify dining choice for packaging customization.
 - **Preparation Scheduling:** Pre-order meals with customizable pickup delay (ASAP, +15m, +30m, +45m, +60m max).
 - **Atomic Daily Canteen Tokens:** Automatic midnight counter reset generating clean token numbers (`Token #1`, `Token #2`, etc.) per canteen per day.
 - **Flexible Payment Options:** Pay via Cash on Pickup or online via **Razorpay** (UPI, Credit/Debit Cards, NetBanking).
 - **Live Order Timeline:** Track realtime kitchen progress (`Pending` → `Accepted` → `Preparing` → `Ready for Pickup` → `Delivered`).
+- **Sticky Mobile Cart Bar:** Fixed bottom bar (`🛒 View Cart (3) • ₹340.00`) for instant single-tap mobile checkout.
 
-### 👨‍🍳 2. Counter Staff Queue (`/canteen`)
+### 👨‍🍳 2. Counter Staff Queue & Menu Management (`/canteen`)
 - **Real-time Order Queue:** Socket.IO WebSocket room connection (`canteen:<canteenId>`) for instant audio/visual order notifications without page refresh.
 - **Kanban Pipeline:** One-click order status progression (`Accept Order` → `Mark Preparing` → `Mark Ready` → `Mark Delivered`).
 - **Counter Cash Collection:** Mark cash orders as paid upon customer arrival.
-- **Menu Availability Toggle:** Enable/disable menu item stock in real time during peak rush hours.
+- **Smart Menu Management & Safeguards:** Toggle dish stock availability in real time. Items linked to past customer order receipts are automatically soft-deleted (marked as *Unavailable*) to preserve historical financial order receipts while preventing foreign key constraint errors.
 
 ### 🏢 3. Canteen Owner Executive Portal (`/owner`)
 - **Executive KPI Dashboard:** Total Revenue, Today's Sales, Active Orders, Average Fulfillment Time, and Total Orders completed.
@@ -52,14 +54,14 @@
 | Layer | Technology / Service |
 | :--- | :--- |
 | **Frontend Framework** | React 19, Vite 6, Tailwind CSS 4 |
-| **Icons & UI** | Lucide React, Framer Motion |
+| **Icons & Brand** | Lucide React, Custom Orange Squircle `cc` Favicon Logo |
 | **Backend Runtime** | Node.js (v24 LTS), Express.js |
 | **Database & ORM** | Neon Cloud PostgreSQL, Prisma ORM (v6.19.3) |
 | **Realtime WebSockets** | Socket.IO (v4.8) |
 | **Payment Gateway** | Razorpay Node SDK (HMAC SHA256 Verification) |
 | **Image Storage** | Cloudinary API |
 | **Email Service** | Nodemailer (Gmail SMTP over SSL Port 465) |
-| **Security & Auth** | JWT (JSON Web Tokens), bcrypt, Helmet, Express Rate Limit, Zod |
+| **Security & Auth** | JWT (JSON Web Tokens), bcrypt, Helmet, Express Rate Limit, Zod, Input Normalization |
 
 ---
 
@@ -78,6 +80,12 @@ GET    /api/campuses/:id/canteens   # List canteens under a specific campus
 GET    /api/canteens                # Search & discover open canteens
 GET    /api/canteens/:id            # Fetch canteen detail & menu items
 PATCH  /api/canteens/:id/toggle-open # Open/close canteen outlet
+
+GET    /api/menu/:canteenId         # Fetch menu items for canteen
+POST   /api/menu                    # Create menu item with Cloudinary upload
+PUT    /api/menu/:id                # Update menu item details
+PATCH  /api/menu/:id/availability   # Toggle item in-stock availability
+DELETE /api/menu/:id                # Safe delete or soft-delete (if in past orders)
 
 GET    /api/orders                  # List user orders (Filtered by role)
 POST   /api/orders                  # Place new order & generate Atomic Token #
