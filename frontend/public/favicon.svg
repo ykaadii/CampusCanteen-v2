@@ -1,42 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ea580c" />
-      <stop offset="50%" stop-color="#f97316" />
-      <stop offset="100%" stop-color="#f59e0b" />
+    <linearGradient id="ccBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="50%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#c2410c" />
     </linearGradient>
-    <linearGradient id="bowlGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#fff7ed" />
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.25" />
+    <filter id="ccShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.2" />
     </filter>
   </defs>
-  
-  <!-- Rounded Brand Container Background -->
-  <rect width="512" height="512" rx="128" fill="url(#bgGradient)" />
-  
-  <!-- Outer Glow Accent Ring -->
-  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#ffffff" stroke-width="8" stroke-opacity="0.25" />
 
-  <!-- Food Bowl & Steam Icon Group -->
-  <g filter="url(#shadow)" transform="translate(0, 8)">
-    <!-- Steam Waves -->
-    <path d="M 190 140 Q 210 110 190 80 Q 170 50 190 20" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" opacity="0.9" />
-    <path d="M 256 140 Q 276 110 256 80 Q 236 50 256 20" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" opacity="0.95" />
-    <path d="M 322 140 Q 342 110 322 80 Q 302 50 322 20" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" opacity="0.9" />
+  <!-- Orange Squircle Box -->
+  <rect width="512" height="512" rx="140" fill="url(#ccBgGradient)" filter="url(#ccShadow)" />
 
-    <!-- Food Bowl Rim & Base -->
-    <path d="M 120 220 L 392 220 C 392 340 330 400 256 400 C 182 400 120 340 120 220 Z" fill="url(#bowlGradient)" />
-    
-    <!-- Bowl Top Rim Highlight -->
-    <ellipse cx="256" cy="220" rx="136" ry="24" fill="#ffffff" stroke="#f97316" stroke-width="12" />
+  <!-- Inner Soft Border Accent -->
+  <rect x="12" y="12" width="488" height="488" rx="128" fill="none" stroke="#ffffff" stroke-width="12" stroke-opacity="0.25" />
 
-    <!-- Delicious Hot Meal Dome Surface -->
-    <ellipse cx="256" cy="220" rx="120" ry="16" fill="#ea580c" />
-    
-    <!-- Fork & Spoon Crossing Emblems -->
-    <path d="M 230 290 Q 256 270 282 290" fill="none" stroke="#ea580c" stroke-width="14" stroke-linecap="round" />
-  </g>
+  <!-- Bold White 'cc' Text Logo -->
+  <text
+    x="256"
+    y="340"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-size="290"
+    font-weight="900"
+    fill="#ffffff"
+    text-anchor="middle"
+    letter-spacing="-14"
+  >cc</text>
 </svg>
